@@ -42,7 +42,7 @@ def T_checker(T, stream, eps, delta):
     for elt in stream:
         for h in hashes:
             h.decider(elt, T)
-    zeroz = len(list(filter(lambda h: h.total == 0, hashes)))
+    zeroz = len(list(filter(lambda h: h.total != 0, hashes)))
     print(zeroz)
     if zeroz < k/math.e:
         print("it's less than T bro")
@@ -50,12 +50,6 @@ def T_checker(T, stream, eps, delta):
         print("it's more than T superchief")
 
 if __name__ == '__main__':
-    #stream = np.ones((20,20), dtype=int).reshape(400,)
-    #T_checker(100, stream, .02, .001)
-    boy = HashFn()
-    count = 0
-    for i in range(100000):
-        if boy.decider(i, 1):
-            count = count + 1
-    print(count)
-        
+    stream = np.identity((1000), dtype=int).reshape(1000000,)
+    T_checker(500, stream, .2, .1)
+    
