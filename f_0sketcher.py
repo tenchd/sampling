@@ -26,30 +26,31 @@ class HashFn():
         self.fn.update(byte_form)
         return self.fn.intdigest()
     
-    def decider(self, num, T):
+    def decider(self, index, value, T):
         """give it a number and a T estimate. it'll return yes w/p 1/T"""
-        hashed = self.hasher(num)
+        hashed = self.hasher(index)
         if hashed <= 4294967296/T:
-            self.total = self.total + num
+            self.total = self.total + value
             return True
         return False
 
 def T_checker(T, stream, eps, delta):
     #k = O(eps^(-2) log(delta^-1))
-    k = int(np.power(eps, -2) * np.log2(np.power(delta,-1)))
+    k = int(np.power(eps, -2) * np.log(np.power(delta,-1)))
     print(k/math.e)
     hashes = [HashFn() for i in range(k)]
-    for elt in stream:
+    for index, element in enumerate(stream):
         for h in hashes:
-            h.decider(elt, T)
-    zeroz = len(list(filter(lambda h: h.total != 0, hashes)))
-    print(zeroz)
-    if zeroz < k/math.e:
-        print("it's less than T bro")
+            h.decider(index, element, T)
+    nonzeroz = len(list(filter(lambda h: h.total != 0, hashes)))
+    print(nonzeroz)
+    if nonzeroz < k/math.e:
+        print("F_0 < (1-{})T = {} bro".format(eps, (1-eps)*T))
     else:
-        print("it's more than T superchief")
+        print("F_0 > (1+{})T  = {} superchief".format(eps, (1+eps)*T))
+   # print([h.total for h in hashes])
 
 if __name__ == '__main__':
-    stream = np.identity((1000), dtype=int).reshape(1000000,)
-    T_checker(500, stream, .2, .1)
+    stream = np.identity((100), dtype=int).reshape(10000,)
+    T_checker(200, stream, .2, .1)
     
