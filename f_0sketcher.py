@@ -103,73 +103,44 @@ class T_checker():
         else:
             return False
 
-# =============================================================================
-# def T_checker_old(T, stream, eps, delta, real_k = False, display=False):
-#     #use either true Chernoff-required k or a smaller value
-#     if real_k:
-#         k = int(calc_k(eps, delta))
-#     else:
-#         k = int(np.power(eps, -2) * np.log(np.power(delta,-1)))
-#     
-#     subsets = c
-#     for index, element in enumerate(stream):
-#         for h in subsets:
-#             h.decider(index, element)
-#     zeroz = len(list(filter(lambda h: h.total == 0, subsets)))
-#     threshold = k/(math.e)
-#     if display:
-#         print("k is {}".format(k))
-#         print("threshold is {}".format(threshold))
-#         print("# of zeros is {}".format(zeroz))
-#         
-#         if zeroz > threshold:
-#             print("F_0 < (1-{})T = {} bro. You guessed too high".format(eps, (1-eps)*T))
-#         else:
-#             print("F_0 > (1+{})T  = {} superchief.  You guessed too low".format(eps, (1+eps)*T))
-#     if zeroz > threshold:
-#         return True
-#     else:
-#         return False
-# =============================================================================
-
 
 if __name__ == '__main__':
 # =============================================================================
 #     stream = np.identity(10, dtype=int).reshape(100,)
 #     T_checker(12, stream, .2, .01, k_wt=1, display=True)
 # =============================================================================
-    
-    F_0 = 100
-    eps = .2
-    delta = .01
-    stream = np.identity((F_0), dtype=int).reshape(F_0**2,)
-    T = 80
-    if T > F_0:
-        too_high = True
-    else:
-        too_high = False
-    real_k = True
-    mistakes = 0
-    print("testing F_0 = {}, T = {}, real k? {}".format(F_0, T, real_k))
-    reps = 5
-    for i in range(reps):
-        t = T_checker(T, eps, delta, real_k=real_k, display=False)
-        t.process_stream(stream)           
-        result = t.evaluate_T()
-        if result != too_high:
-            mistakes = mistakes + 1
-            print("!", end = '')
-        else:
-            print(".", end = '')
-    print("{}/{} mistakes".format(mistakes, reps))
-    
 # =============================================================================
-#     eps = .02
-#     n = 1000
-#     #print(math.log(1000, 1+eps))
-#     #print(math.pow(1.2, 37))
-#     #print(math.pow(1.2, 38))
-#     length_Ts = int(math.log(n, 1+eps)) + 1
-#     Ts = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
-#     print(Ts)
+#     
+#     F_0 = 100
+#     eps = .2
+#     delta = .01
+#     stream = np.identity((F_0), dtype=int).reshape(F_0**2,)
+#     T = 80
+#     if T > F_0:
+#         too_high = True
+#     else:
+#         too_high = False
+#     real_k = True
+#     mistakes = 0
+#     print("testing F_0 = {}, T = {}, real k? {}".format(F_0, T, real_k))
+#     reps = 5
+#     for i in range(reps):
+#         t = T_checker(T, eps, delta, real_k=real_k, display=False)
+#         t.process_stream(stream)           
+#         result = t.evaluate_T()
+#         if result != too_high:
+#             mistakes = mistakes + 1
+#             print("!", end = '')
+#         else:
+#             print(".", end = '')
+#     print("{}/{} mistakes".format(mistakes, reps))
 # =============================================================================
+    
+    eps = .02
+    n = 1000
+    #print(math.log(1000, 1+eps))
+    #print(math.pow(1.2, 37))
+    #print(math.pow(1.2, 38))
+    length_Ts = int(math.log(n, 1+eps)) + 1
+    Ts = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
+    print(Ts)
