@@ -92,7 +92,7 @@ class T_checker():
             return False
 
 class F_0_sketcher():
-    
+    """Top-level class for F_0 sketcher."""
     def __init__(self, n, stream, eps, delta, real_k=False, display=False):
         self.n =n
         self.stream = stream
@@ -109,8 +109,8 @@ class F_0_sketcher():
         #create a list of (1+eps)^i T value estimates 
         T_vals = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
         T_vals[-1] = n
+        #create the sketch objects for each T estimate
         self.Ts = [T_checker(t, eps, delta, self.k, display) for t in T_vals]
-        #print([t.T for t in self.Ts])
 
     def calc_k(self, eps, delta):
         """Input: epsilon and delta error terms (floats).  Output: k, minimum # of
@@ -124,12 +124,18 @@ class F_0_sketcher():
         return result
         
     def process_stream(self):
+        """Iterates through the stream iterator, applying each stream element
+        to each of the T-estimate sketches"""
         for index, value in self.stream:
-            #print(index,value)
             for t in self.Ts:
                 t.update(index, value)
     
     def estimate_F_0(self):
+        """Call this after the stream has been processed to get an estimate
+        for F_0.  At the moment it assumes the lowest T-estimate to have a 
+        sketch that evaluates to True is the best estimate.  Since any of the
+        T-estimate sketches can fail and give the wrong answer, this can be
+        wrong when a T-estimate sketch with T< F_0 fails.  Fix it"""
         #this part assumes that you switch from F to T once and it never changes
         #again.  needs to be fixed!
         for t in self.Ts:
@@ -137,6 +143,8 @@ class F_0_sketcher():
                 return t.T
 
 class SampleStream():
+    """An iterator that generates stream elements to add 1 to every 10th 
+    index of the vector"""
     def __init__(self,n):
         self.n = n
         self.i = 0
@@ -153,6 +161,8 @@ class SampleStream():
             return x,1
         
 class SampleStream2(SampleStream):
+    """An iterator that generates stream elements to subtract 1 from every 20th
+    index of the vector"""
     def __next__(self):
         if self.i==self.n:
             raise StopIteration
