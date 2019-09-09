@@ -11,6 +11,7 @@ import xxhash
 from random import getrandbits
 import math
 import struct
+import itertools
 
 
 
@@ -57,17 +58,6 @@ class T_checker():
         self.subsets = [RandomIndexSubset(T) for i in range(self.k)]
         #will report T too high if there are at least k/e empty subsets
         self.threshold = self.k/math.e
-
-    def calc_k(self, eps, delta):
-        """Input: epsilon and delta error terms (floats).  Output: k, minimum # of
-        random sets required to guarantee multiplicative error factor eps with
-        probability of failure no more than delta. Via Chernoff bound argument."""
-        term1 = -1*np.log(delta)
-        term2 = eps/np.power(eps+math.e/3, 2)
-        term3 = (1/math.e - eps/3)
-        frac = (2+term2)/(term2*eps*term3)
-        result = term1*frac
-        return result
     
     def update(self, index, value):
         """Processes a single stream element."""
@@ -77,7 +67,7 @@ class T_checker():
     def process_stream(self, stream):
         """Processes an entire stream (any iterable containing (index,value)
         pairs)"""
-        for index, value in enumerate(stream):
+        for index, value in stream:
             self.update(index, value)
     
     def evaluate_T(self):
@@ -121,25 +111,69 @@ class F_0_sketcher():
         T_vals[-1] = n
         self.Ts = [T_checker(t, eps, delta, self.k, display) for t in T_vals]
         #print([t.T for t in self.Ts])
+
+    def calc_k(self, eps, delta):
+        """Input: epsilon and delta error terms (floats).  Output: k, minimum # of
+        random sets required to guarantee multiplicative error factor eps with
+        probability of failure no more than delta. Via Chernoff bound argument."""
+        term1 = -1*np.log(delta)
+        term2 = eps/np.power(eps+math.e/3, 2)
+        term3 = (1/math.e - eps/3)
+        frac = (2+term2)/(term2*eps*term3)
+        result = term1*frac
+        return result
         
     def process_stream(self):
-        for index, value in enumerate(self.stream):
+        for index, value in self.stream:
             #print(index,value)
             for t in self.Ts:
                 t.update(index, value)
     
     def estimate_F_0(self):
+        #this part assumes that you switch from F to T once and it never changes
+        #again.  needs to be fixed!
         for t in self.Ts:
             if t.evaluate_T():
                 return t.T
+
+class SampleStream():
+    def __init__(self,n):
+        self.n = n
+        self.i = 0
         
+    def __iter__(self):
+        return self
+  
+    def __next__(self):
+        if self.i==self.n:
+            raise StopIteration
+        else:
+            x = self.i
+            self.i += 10
+            return x,1
         
+class SampleStream2(SampleStream):
+    def __next__(self):
+        if self.i==self.n:
+            raise StopIteration
+        else:
+            x = self.i
+            self.i+=20
+            return x, -1
+            
 
 if __name__ == '__main__':
-# =============================================================================
-#     stream = np.identity(10, dtype=int).reshape(100,)
-#     T_checker(12, stream, .2, .01, k_wt=1, display=True)
-# =============================================================================
+    
+    n = 10000
+    eps = .1
+    delta = .01
+    stream = itertools.chain(iter(SampleStream(n)),iter(SampleStream2(n)))
+    #stream = iter(SampleStream(n))
+    f = F_0_sketcher(n, stream, eps, delta, real_k = False)
+    f.process_stream()
+    print(f.estimate_F_0())
+    
+    
 # =============================================================================
 #     
 #     F_0 = 100
@@ -165,23 +199,4 @@ if __name__ == '__main__':
 #         else:
 #             print(".", end = '')
 #     print("{}/{} mistakes".format(mistakes, reps))
-# =============================================================================
-    
-    n = 400
-    eps = .2
-    delta = .01
-    stream=np.identity(20, dtype=int).reshape(400,).tolist()
-    f = F_0_sketcher(n, stream, eps, delta)
-    f.process_stream()
-    print(f.estimate_F_0())
-    
-    
-# =============================================================================
-#     #print(math.log(1000, 1+eps))
-#     #print(math.pow(1.2, 37))
-#     #print(math.pow(1.2, 38))
-#     length_Ts = int(math.log(n, 1+eps)) + 2
-#     Ts = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
-#     Ts[-1] = n
-#     print(Ts)
 # =============================================================================
