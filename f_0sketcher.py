@@ -46,16 +46,13 @@ class RandomIndexSubset():
 class T_checker():
     """Manages all state required to evaluate whether a particular F_0 estimate
     T is too high or too low over the course of the entire stream."""
-    def __init__(self, T, eps, delta, real_k = False, display = False):
+    def __init__(self, T, eps, delta, k, display = False):
         self.T = T
         self.eps = eps
         self.delta = delta
         self.display = display
-        #use either true Chernoff-required k or a smaller value
-        if real_k:
-            self.k = int(self.calc_k(eps, delta))
-        else:
-            self.k = int(np.power(eps, -2) * np.log(np.power(delta,-1)))
+        self.k = k
+        
         #make k random subsets for sampling
         self.subsets = [RandomIndexSubset(T) for i in range(self.k)]
         #will report T too high if there are at least k/e empty subsets
@@ -88,6 +85,7 @@ class T_checker():
         zeros is greater than the threshold.  This indicates that T is too high
         an estimate of F_0.  Otherwise, returns false indicating that T is 
         too low."""
+        #print(self.subsets)
         zeros = len(list(filter(lambda s: s.total==0, self.subsets)))
         if self.display:
             print("k is {}".format(self.k))
@@ -95,14 +93,47 @@ class T_checker():
             print("# of zeros is {}".format(zeros))
             
             if zeros > self.threshold:
-                print("F_0 < (1-{})T = {} bro. You guessed too high".format(self.eps, (1-self.eps)*T))
+                print("F_0 < (1-{})T = {} bro. You guessed too high".format(self.eps, (1-self.eps)*self.T))
             else:
-                print("F_0 > (1+{})T  = {} superchief.  You guessed too low".format(self.eps, (1+self.eps)*T))
+                print("F_0 > (1+{})T  = {} superchief.  You guessed too low".format(self.eps, (1+self.eps)*self.T))
         if zeros > self.threshold:
             return True
         else:
             return False
 
+class F_0_sketcher():
+    
+    def __init__(self, n, stream, eps, delta, real_k=False, display=False):
+        self.n =n
+        self.stream = stream
+        self.eps = eps
+        self.delta = delta
+        
+        #use either true Chernoff-required k or a smaller value
+        if real_k:
+            self.k = int(self.calc_k(eps, delta))
+        else:
+            self.k = int(np.power(eps, -2) * np.log(np.power(delta,-1)))
+        
+        length_Ts = int(math.log(n, 1+eps)) + 2
+        #create a list of (1+eps)^i T value estimates 
+        T_vals = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
+        T_vals[-1] = n
+        self.Ts = [T_checker(t, eps, delta, self.k, display) for t in T_vals]
+        #print([t.T for t in self.Ts])
+        
+    def process_stream(self):
+        for index, value in enumerate(self.stream):
+            #print(index,value)
+            for t in self.Ts:
+                t.update(index, value)
+    
+    def estimate_F_0(self):
+        for t in self.Ts:
+            if t.evaluate_T():
+                return t.T
+        
+        
 
 if __name__ == '__main__':
 # =============================================================================
@@ -136,11 +167,21 @@ if __name__ == '__main__':
 #     print("{}/{} mistakes".format(mistakes, reps))
 # =============================================================================
     
-    eps = .02
-    n = 1000
-    #print(math.log(1000, 1+eps))
-    #print(math.pow(1.2, 37))
-    #print(math.pow(1.2, 38))
-    length_Ts = int(math.log(n, 1+eps)) + 1
-    Ts = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
-    print(Ts)
+    n = 400
+    eps = .2
+    delta = .01
+    stream=np.identity(20, dtype=int).reshape(400,).tolist()
+    f = F_0_sketcher(n, stream, eps, delta)
+    f.process_stream()
+    print(f.estimate_F_0())
+    
+    
+# =============================================================================
+#     #print(math.log(1000, 1+eps))
+#     #print(math.pow(1.2, 37))
+#     #print(math.pow(1.2, 38))
+#     length_Ts = int(math.log(n, 1+eps)) + 2
+#     Ts = np.unique(np.power(1+eps, np.arange(length_Ts)).astype(int))
+#     Ts[-1] = n
+#     print(Ts)
+# =============================================================================
