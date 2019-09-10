@@ -20,7 +20,7 @@ class SampleStream():
         if self.i>=self.n:
             raise StopIteration
         else:
-            if self.i%100==0:
+            if self.i%int(self.n/100)==0:
                 print(".", end = '')
             x = self.i
             self.i += 10
@@ -34,7 +34,7 @@ class SampleStream2(SampleStream):
         if self.i>=self.n:
             raise StopIteration
         else:
-            if self.i%100==0:
+            if self.i%int(self.n/100)==0:
                 print(".", end = '')                
             x = self.i
             self.i+=20

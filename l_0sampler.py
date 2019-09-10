@@ -14,6 +14,20 @@ import struct
 import sample_streams as strm
 import itertools
 
+def is_prime(n):
+    """"pre-condition: n is a nonnegative integer
+    post-condition: return True if n is prime and False otherwise."""
+    if n < 2: 
+         return False;
+    if n % 2 == 0:             
+         return n == 2  # return False
+    k = 3
+    while k*k <= n:
+         if n % k == 0:
+             return False
+         k += 2
+    return True
+
 class RandomIndexSubset():
     """Represents a random subset of [n] where each element is included 
     independently w/p 1/2^i.  Maintains sum{x_j}, sum{j*x_j}, and 
@@ -114,10 +128,13 @@ class l_0_sketch():
         self.sampled = False
         
     def choose_p(self):
-        """p must be prime and also poly(n). If someone can write efficient
-        code that finds a prime close to but larger than target, l_0_sketch 
-        is done"""
+        """p must be prime and also poly(n). i stole this code from stack
+        overflow"""
         target = pow(self.n,2)
+        while True:
+            target += 1
+            if is_prime(target):
+                break
         return target
     
     def update(self, index, value):
@@ -158,9 +175,10 @@ class l_0_sketch():
     
 
 if __name__ == '__main__':
-    n = 127
+    n = 1280000
     l = l_0_sketch(n)
     stream = itertools.chain(iter(strm.SampleStream(n)),iter(strm.SampleStream2(n)))
     l.process_stream(stream)
-    print(l.l_0_sample())
+    print('the sampled index, value pair is {}'.format(l.l_0_sample()))
+    print('it\'s correct if the index is a multiple of 10 but not 20 and the value is 1')
     
