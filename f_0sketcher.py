@@ -132,12 +132,10 @@ class F_0_sketcher():
     
     def estimate_F_0(self):
         """Call this after the stream has been processed to get an estimate
-        for F_0.  At the moment it assumes the lowest T-estimate to have a 
-        sketch that evaluates to True is the best estimate.  Since any of the
-        T-estimate sketches can fail and give the wrong answer, this can be
-        wrong when a T-estimate sketch with T< F_0 fails.  Fix it"""
-        #this part assumes that you switch from F to T once and it never changes
-        #again.  needs to be fixed!
+        for F_0.  First checks whether the results from different T checkers
+        are consistent.  If not, the F_0 estimation process fails.  Otherwise,
+        returns the first T value to evaluate to True."""
+        #make sure that all Ts evaluating False come before all those evaluating True
         results = [t.evaluate_T() for t in self.Ts]
         first_true = None
         for i,r in enumerate(results):
