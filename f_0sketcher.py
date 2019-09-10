@@ -138,9 +138,17 @@ class F_0_sketcher():
         wrong when a T-estimate sketch with T< F_0 fails.  Fix it"""
         #this part assumes that you switch from F to T once and it never changes
         #again.  needs to be fixed!
-        for t in self.Ts:
-            if t.evaluate_T():
-                return t.T
+        results = [t.evaluate_T() for t in self.Ts]
+        first_true = None
+        for i,r in enumerate(results):
+            if r:
+                if first_true==None:
+                    first_true = i
+            else:
+                if first_true!=None:
+                    print([(t.T, t.evaluate_T()) for t in self.Ts])
+                    raise Exception('random process failed, dumping Ts')
+        return self.Ts[first_true].T
 
 class SampleStream():
     """An iterator that generates stream elements to add 1 to every 10th 
@@ -185,7 +193,6 @@ if __name__ == '__main__':
     
     
 # =============================================================================
-#     
 #     F_0 = 100
 #     eps = .2
 #     delta = .01
