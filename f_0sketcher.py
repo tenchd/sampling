@@ -33,9 +33,8 @@ class RandomIndexSubset():
         return self.fn.intdigest()
     
     def decider(self, index, value):
-        """Input: index and value of vector update and a T estimate (all 
-        integers).  Return yes w/p 1/T by hashing index.  If yes, add value to 
-        running total."""
+        """Input: index and value of vector update.  Return yes w/p 1/T by 
+        hashing index.  If yes, add value to running total."""
         hashed = self.hasher(index)
         #2^32-1 = 4294967295 is max output value from hash function
         if hashed <= 4294967295/self.T: 
