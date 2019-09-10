@@ -14,7 +14,6 @@ import struct
 import itertools
 
 
-
 class RandomIndexSubset():
     """Represents a random subset of [n].  Keeps running total of the value of
     all stream updates whose indicies are in this random subset.  Set maintained
@@ -43,6 +42,7 @@ class RandomIndexSubset():
             self.total = self.total + value
             return True
         return False
+    
 
 class T_checker():
     """Manages all state required to evaluate whether a particular F_0 estimate
@@ -90,6 +90,7 @@ class T_checker():
             return True
         else:
             return False
+        
 
 class F_0_sketcher():
     """Top-level class for F_0 sketcher."""
@@ -147,6 +148,7 @@ class F_0_sketcher():
                     print([(t.T, t.evaluate_T()) for t in self.Ts])
                     raise Exception('random process failed, dumping Ts')
         return self.Ts[first_true].T
+    
 
 class SampleStream():
     """An iterator that generates stream elements to add 1 to every 10th 
@@ -162,9 +164,12 @@ class SampleStream():
         if self.i==self.n:
             raise StopIteration
         else:
+            if self.i%100==0:
+                print(".", end = '')
             x = self.i
             self.i += 10
             return x,1
+        
         
 class SampleStream2(SampleStream):
     """An iterator that generates stream elements to subtract 1 from every 20th
@@ -173,6 +178,8 @@ class SampleStream2(SampleStream):
         if self.i==self.n:
             raise StopIteration
         else:
+            if self.i%100==0:
+                print(".", end = '')                
             x = self.i
             self.i+=20
             return x, -1
@@ -180,8 +187,8 @@ class SampleStream2(SampleStream):
 
 if __name__ == '__main__':
     
-    n = 10000
-    eps = .1
+    n = 1000
+    eps = .05
     delta = .01
     stream = itertools.chain(iter(SampleStream(n)),iter(SampleStream2(n)))
     #stream = iter(SampleStream(n))
