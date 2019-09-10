@@ -17,7 +17,7 @@ class SampleStream():
         return self
   
     def __next__(self):
-        if self.i==self.n:
+        if self.i>=self.n:
             raise StopIteration
         else:
             if self.i%100==0:
@@ -31,7 +31,7 @@ class SampleStream2(SampleStream):
     """An iterator that generates stream elements to subtract 1 from every 20th
     index of the vector"""
     def __next__(self):
-        if self.i==self.n:
+        if self.i>=self.n:
             raise StopIteration
         else:
             if self.i%100==0:
