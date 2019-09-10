@@ -32,15 +32,13 @@ class RandomIndexSubset():
         self.fn.update(byte_form)
         return self.fn.intdigest()
     
-    def decider(self, index, value):
+    def update(self, index, value):
         """Input: index and value of vector update.  Return yes w/p 1/T by 
         hashing index.  If yes, add value to running total."""
         hashed = self.hasher(index)
         #2^32-1 = 4294967295 is max output value from hash function
         if hashed <= 4294967295/self.T: 
             self.total = self.total + value
-            return True
-        return False
     
 
 class T_checker():
@@ -61,7 +59,7 @@ class T_checker():
     def update(self, index, value):
         """Processes a single stream element."""
         for s in self.subsets:
-            s.decider(index, value)
+            s.update(index, value)
         
     def process_stream(self, stream):
         """Processes an entire stream (any iterable containing (index,value)
