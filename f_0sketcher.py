@@ -12,6 +12,7 @@ from random import getrandbits
 import math
 import struct
 import itertools
+import sample_streams as strm
 
 
 class RandomIndexSubset():
@@ -145,40 +146,6 @@ class F_0_sketcher():
                     raise Exception('random process failed, dumping Ts')
         return self.Ts[first_true].T
     
-
-class SampleStream():
-    """An iterator that generates stream elements to add 1 to every 10th 
-    index of the vector"""
-    def __init__(self,n):
-        self.n = n
-        self.i = 0
-        
-    def __iter__(self):
-        return self
-  
-    def __next__(self):
-        if self.i==self.n:
-            raise StopIteration
-        else:
-            if self.i%100==0:
-                print(".", end = '')
-            x = self.i
-            self.i += 10
-            return x,1
-        
-        
-class SampleStream2(SampleStream):
-    """An iterator that generates stream elements to subtract 1 from every 20th
-    index of the vector"""
-    def __next__(self):
-        if self.i==self.n:
-            raise StopIteration
-        else:
-            if self.i%100==0:
-                print(".", end = '')                
-            x = self.i
-            self.i+=20
-            return x, -1
             
 
 if __name__ == '__main__':
@@ -186,7 +153,7 @@ if __name__ == '__main__':
     n = 1000
     eps = .05
     delta = .01
-    stream = itertools.chain(iter(SampleStream(n)),iter(SampleStream2(n)))
+    stream = itertools.chain(iter(strm.SampleStream(n)),iter(strm.SampleStream2(n)))
     #stream = iter(SampleStream(n))
     f = F_0_sketcher(n, eps, delta, real_k = False)
     f.process_stream(stream)
