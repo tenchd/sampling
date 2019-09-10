@@ -91,9 +91,8 @@ class T_checker():
 
 class F_0_sketcher():
     """Top-level class for F_0 sketcher."""
-    def __init__(self, n, stream, eps, delta, real_k=False, display=False):
+    def __init__(self, n, eps, delta, real_k=False, display=False):
         self.n =n
-        self.stream = stream
         self.eps = eps
         self.delta = delta
         
@@ -121,10 +120,10 @@ class F_0_sketcher():
         result = term1*frac
         return result
         
-    def process_stream(self):
+    def process_stream(self, stream):
         """Iterates through the stream iterator, applying each stream element
         to each of the T-estimate sketches"""
-        for index, value in self.stream:
+        for index, value in stream:
             for t in self.Ts:
                 t.update(index, value)
     
@@ -189,8 +188,8 @@ if __name__ == '__main__':
     delta = .01
     stream = itertools.chain(iter(SampleStream(n)),iter(SampleStream2(n)))
     #stream = iter(SampleStream(n))
-    f = F_0_sketcher(n, stream, eps, delta, real_k = False)
-    f.process_stream()
+    f = F_0_sketcher(n, eps, delta, real_k = False)
+    f.process_stream(stream)
     print(f.estimate_F_0())
     
     
