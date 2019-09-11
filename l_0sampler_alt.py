@@ -17,7 +17,8 @@ import itertools
 
 def is_prime(n):
     """"pre-condition: n is a nonnegative integer
-    post-condition: return True if n is prime and False otherwise."""
+    post-condition: return True if n is prime and False otherwise.
+    this code stolen from stackoverflow"""
     if n < 2: 
          return False;
     if n % 2 == 0:             
@@ -98,16 +99,6 @@ class RandomIndexSubset():
             self.queryable[channel] = True
             print('passed!')
             return True
-# =============================================================================
-#         print('didn\'t work.  a = {} b = {} c = {} a/b = {} r = {} c_check = {}'.format(self.a, self.b, self.c, self.a/self.b, self.r, c_check))
-#         subset = []
-#         for i in range(100):
-#             hashed = self.hasher(i)
-#             #2^32-1 = 4294967295 is max output value from hash function
-#             if hashed <= 4294967295/self.threshold:
-#                 subset.append(i)
-#         print(subset)
-# =============================================================================
         print('failed the checks')
         return False
 
@@ -126,7 +117,7 @@ class RandomIndexSubset():
             raise Exception('you tried to sample from subset {}, channel {} when it hadn\'t been checked successfully'.format(self.i, channel))
     
 # =============================================================================
-#     Methods below are for handling sampling from linear combinations of channels
+#     Methods below are for handling sampling from linear combinations of streams
 # =============================================================================
     
     def check_linear_combo(self, terms):
@@ -193,8 +184,7 @@ class l_0_sketch():
         self.sampled = False
         
     def choose_p(self):
-        """p must be prime and also poly(n). i stole this code from stack
-        overflow"""
+        """p must be prime and also poly(n)."""
         target = pow(self.n,2)
         while True:
             target += 1
@@ -203,15 +193,26 @@ class l_0_sketch():
         return target
     
     def update(self, index, value, channel=0):
+        """Updates the state of all RIS objects in the sketch with the stream 
+        element (index, value).  If sketching multiple streams, you can specify the
+        channel you want to update."""
         for mini_sketch in self.subsets:
             for s in mini_sketch:
                 s.update(index, value, channel)
     
     def process_stream(self, stream, channel=0):
+        """Updates the state of all RIS objects in the sketch with all the 
+        elements in any iterable.  If sketching multiple streams, you can 
+        specify the channel this stream will update."""
         for index, value in stream:
             self.update(index, value, channel)
     
     def check_mini_sketch(self, mini_sketch, channel):
+        """Each mini-sketch contains RISes 0, 1, 2, ..., log(n) s.t. RIS i includes
+        each index j in [n] w/p 1/2^i.  (There are log(n) mini-sketches in total
+        so one of them will be suitable for sampling with high probability.)
+        Each RIS on the specified channel is checked for sample-ability.  
+        Returns a list indicating which of the RISes can be sampled from."""
         passes = []
         for subset in mini_sketch:
             if subset.check(channel):
@@ -222,6 +223,8 @@ class l_0_sketch():
         
         
     def l_0_sample(self, channel=0):
+        """Samples a nonzero element uniformly at random from the vector
+        defined by the stream on the specified channel."""
         if self.sampled:
             raise Exception('You already sampled from this sketch. Sampling again is potentially fatal to you, the user.  Didn\'t you read the docstring?')
         self.sampled = True
@@ -234,10 +237,14 @@ class l_0_sketch():
         return False
     
 # =============================================================================
-#     Methods below are for handling sampling from linear combinations of channels
+#     Methods below are for handling sampling from linear combinations of streams
 # =============================================================================
         
     def check_mini_sketch_linear(self, mini_sketch, terms):
+        """Each mini-sketch contains RISes 0, 1, 2, ..., log(n) s.t. RIS i includes
+        each index j in [n] w/p 1/2^i.  Each RIS on the specified linear 
+        combination of channels is checked for sample-ability.  Returns a list 
+        indicating which of the RISes can be sampled from."""
         passes = []
         for subset in mini_sketch:
             if subset.check_linear_combo(terms):
@@ -247,6 +254,8 @@ class l_0_sketch():
         return False
     
     def l_0_sample_linear(self, terms):
+        """Samples a nonzero element uniformly at random from the vector
+        defined by the specified linear combination of streams."""
         if self.sampled:
             raise Exception('You already sampled from this sketch. Sampling again is potentially fatal to you, the user.  Didn\'t you read the docstring?')
         self.sampled = True
