@@ -159,29 +159,3 @@ if __name__ == '__main__':
     f.process_stream(stream)
     print(f.estimate_F_0())
     
-    
-# =============================================================================
-#     F_0 = 100
-#     eps = .2
-#     delta = .01
-#     stream = np.identity((F_0), dtype=int).reshape(F_0**2,)
-#     T = 80
-#     if T > F_0:
-#         too_high = True
-#     else:
-#         too_high = False
-#     real_k = True
-#     mistakes = 0
-#     print("testing F_0 = {}, T = {}, real k? {}".format(F_0, T, real_k))
-#     reps = 5
-#     for i in range(reps):
-#         t = T_checker(T, eps, delta, real_k=real_k, display=False)
-#         t.process_stream(stream)           
-#         result = t.evaluate_T()
-#         if result != too_high:
-#             mistakes = mistakes + 1
-#             print("!", end = '')
-#         else:
-#             print(".", end = '')
-#     print("{}/{} mistakes".format(mistakes, reps))
-# =============================================================================
