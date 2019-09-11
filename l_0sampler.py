@@ -6,6 +6,10 @@ Created on Wed Jul  3 00:19:46 2019
 @author: devd
 """
 
+"""TODO: make hash functions separate from sum state, to allow for composition
+of different sketches.  necessary for e.g. graph connectivity where you have
+to add node-based sketches with the same randomness together."""
+
 import xxhash
 import numpy as np
 from random import getrandbits, randint, choice
