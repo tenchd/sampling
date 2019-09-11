@@ -18,6 +18,7 @@ class SampleStream():
   
     def __next__(self):
         if self.i>=self.n:
+            print()
             raise StopIteration
         else:
             if self.i%int(self.n/100)==0:
@@ -32,6 +33,7 @@ class SampleStream2(SampleStream):
     index of the vector"""
     def __next__(self):
         if self.i>=self.n:
+            print()
             raise StopIteration
         else:
             if self.i%int(self.n/100)==0:
