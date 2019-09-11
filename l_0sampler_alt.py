@@ -6,9 +6,6 @@ Created on Wed Jul  3 00:19:46 2019
 @author: devd
 """
 
-"""TODO: make hash functions separate from sum state, to allow for composition
-of different sketches.  necessary for e.g. graph connectivity where you have
-to add node-based sketches with the same randomness together."""
 
 import xxhash
 import numpy as np
@@ -33,16 +30,17 @@ def is_prime(n):
     return True
 
 class RandomIndexSubset():
-    """Represents a random subset of [n] where each element is included 
-    independently w/p 1/2^i.  Maintains sum{x_j}, sum{j*x_j}, and 
-    sum{x_j*r^j mod p} for all j in the subset.  Set maintained
-    in log(n) space via hash functions. TODO: explain channels in documentation"""
+    """Represents a random subset S of [n] where each element is included 
+    independently w/p 1/2^i.  For each channel C, maintains sum{x_j}, sum{j*x_j},
+    and sum{x_j*r^j mod p} for all j in S, x_j in C.  Set maintained in 
+    O(log(n) + # channels) space via hash functions."""
     def __init__(self, i, p, channels):
         seed = getrandbits(32)
         self.fn = xxhash.xxh32(seed = seed)
-        self.total = 0
+        #self.total = 0    #i think this line can be removed 
         self.i = i
         self.threshold = math.pow(2,i)
+        #create vectors of a,b,c values for each channel
         #sum{j*x_j}
         self.a = np.zeros(channels, dtype=int)
         #sum{x_j}
@@ -50,11 +48,13 @@ class RandomIndexSubset():
         #sum{x_j*r^j mod p}
         self.c = np.zeros(channels, dtype=int)
         self.p = p
-        #make sure this randomness works safely, and doesn't, say, give the same
-        #output each time you make a new RIS object
+        #TODO: make sure this randomness works safely, and doesn't, say, give 
+        #the same output each time you make a new RIS object
         self.r = randint(1, p-1)
+        #keep track of whether channels have been checked. If not, sampling will fail
         self.queryable = [False for j in range(channels)]
         #additionally keep track of linear combos of channels you may have checked
+        #and whether they were queryable.  If not, sampling will fail
         self.linear_queryable = {}
     
     def hasher(self, num):
@@ -76,10 +76,10 @@ class RandomIndexSubset():
             self.c[channel] += value * pow(self.r, index, self.p)
     
     def check(self, channel):
-        """Returns True if a,b,c pass the checks. If it does, this indicates
-        with probability n/p that the random set contains 1 nonzero entry and
-        can be sampled from.  If it fails the checks, no sampling is possible
-        and so check returns False."""
+        """Returns True if a,b,c on the specified channel pass the checks. 
+        If they do, this indicates with probability n/p that the corresponding
+        random set contains 1 nonzero entry and can be sampled from.  If it 
+        fails the checks, no sampling is possible and so check returns False."""
         #if for some reason you previously checked the sketch on this channel
         #but didn't sample from it, reset the queryable variable (lol) so
         #you don't erroneously pass the check if it should fail.
@@ -112,8 +112,8 @@ class RandomIndexSubset():
         return False
 
     def sample(self, channel):
-        """If the subset has been checked, return the unique index, value pair
-        encoded in a and b."""
+        """If the subset has been checked on the specified channel, return the 
+        unique index, value pair encoded in a and b."""
         if self.queryable[channel]:
             a = self.a[channel]
             b = self.b[channel]
@@ -130,6 +130,8 @@ class RandomIndexSubset():
 # =============================================================================
     
     def check_linear_combo(self, terms):
+        """Checks whether the sketch can sample from a linear combination of 
+        its channels.  As self.check() above."""
         a = 0
         b = 0
         c = 0
@@ -151,6 +153,9 @@ class RandomIndexSubset():
         return False
     
     def sample_linear_combo(self, terms):
+        """If the subset has been checked on the specified linear combination
+        of channels, return the unique index, value pair encoded in the linear
+        combination of a and b."""
         if self.linear_queryable[terms]:
             a = 0
             b = 0
@@ -168,7 +173,14 @@ class RandomIndexSubset():
     
 
 class l_0_sketch():
-    """Warning: only ever sample _ONCE_ from an l_0 sketch.  Taking more samples 
+    """Processes a stream of updates to a length n vector in log(n) space.  
+    This procedure is called sketching. After the stream, can sample uniformly 
+    at random from the nonzero elements of the vector, returning both index 
+    and value of the sampled element.  
+    Additionally supports sketching multiple streams in parallel, using the 
+    same randomness for each stream.  After the streams, the sketch can sample
+    uniformly at random from the nonzero elements of any linear combination of
+    the streams.  Warning: only ever sample _ONCE_ from an l_0 sketch.  Taking more samples 
     (ESPECIALLY if you try to subtract the first value you sampled, and then 
     sample again in hopes of getting a second distinct sample) WILL NOT yield
     the desired statistical properties and may actually output nonsense."""
@@ -199,7 +211,7 @@ class l_0_sketch():
         for index, value in stream:
             self.update(index, value, channel)
     
-    def check_mini_sketch(self, mini_sketch, channel=0):
+    def check_mini_sketch(self, mini_sketch, channel):
         passes = []
         for subset in mini_sketch:
             if subset.check(channel):
