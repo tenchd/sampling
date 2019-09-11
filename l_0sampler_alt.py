@@ -34,7 +34,7 @@ class RandomIndexSubset():
     """Represents a random subset S of [n] where each element is included 
     independently w/p 1/2^i.  For each channel C, maintains sum{x_j}, sum{j*x_j},
     and sum{x_j*r^j mod p} for all j in S, x_j in C.  Set maintained in 
-    O(log(n) + # channels) space via hash functions."""
+    O(polylog(n) + # channels) space via hash functions."""
     def __init__(self, i, p, channels):
         seed = getrandbits(32)
         self.fn = xxhash.xxh32(seed = seed)
@@ -56,6 +56,9 @@ class RandomIndexSubset():
         self.queryable = [False for j in range(channels)]
         #additionally keep track of linear combos of channels you may have checked
         #and whether they were queryable.  If not, sampling will fail
+        #this could get too big if the user is able to run check_linear_combo
+        #for an arbitrary number of linear combinations of channels. That
+        #might need to be fixed.
         self.linear_queryable = {}
     
     def hasher(self, num):
@@ -164,14 +167,17 @@ class RandomIndexSubset():
     
 
 class l_0_sketch():
-    """Processes a stream of updates to a length n vector in log(n) space.  
+    """Processes a stream of updates to a length n vector in polylog(n) space.  
     This procedure is called sketching. After the stream, can sample uniformly 
     at random from the nonzero elements of the vector, returning both index 
     and value of the sampled element.  
     Additionally supports sketching multiple streams in parallel, using the 
     same randomness for each stream.  After the streams, the sketch can sample
     uniformly at random from the nonzero elements of any linear combination of
-    the streams.  Warning: only ever sample _ONCE_ from an l_0 sketch.  Taking more samples 
+    the streams. In this case the entire sketch lakes C*polylog(n) space where C
+    is the number of streams.  Typically, for graph sketching applications
+    C = |V| and n = |V| choose 2, which leads to |V| * polylog(|V|) space
+    Warning: only ever sample _ONCE_ from an l_0 sketch.  Taking more samples 
     (ESPECIALLY if you try to subtract the first value you sampled, and then 
     sample again in hopes of getting a second distinct sample) WILL NOT yield
     the desired statistical properties and may actually output nonsense."""
