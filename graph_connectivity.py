@@ -9,9 +9,10 @@ Created on Tue Sep 10 21:13:33 2019
 import l_0sampler as sktch
 import math
 
-def ite(m, index):
+def ite(n, index):
     """index to edge.  this is definitely the simplest way to do this"""
-    n = int(0.5*(1 + math.sqrt(8*m+1)))
+    #n = int(0.5*(1 + math.sqrt(8*m+1)))
+    m = n*(n-1)/2
     i = n-int(0.5*(1 + math.sqrt(8*(m-index-1)+1)))-1
     j = index + i - int(m-(n-i)*(n-i-1)/2)+1
     return i,j
@@ -29,20 +30,22 @@ class Edge():
         else:
             self.p = -1
     
-    def eti(self, m):
+    def eti(self, n):
         """Takes a pair i,j and returns the index associated with (i,j)in the 
         length n signed vertex-edge vector."""
         i = self.i
         j = self.j
-        index = (i)*m - int((i*(i+1)/2)) + j-i-1
+        index = (i)*n - int((i*(i+1)/2)) + j-i-1
         return int(index)
 
 class Supernode():
     """A collection of nodes.  Formed by specifying a particular node or
     merging two (super)nodes."""
-    def __init__(self, node = None, parts = None):
+    def __init__(self, node = None, nodes = None, parts = None):
         if type(node)==int:
             self.nodes = {node}
+        elif type(nodes)==set and nodes:
+            self.nodes = nodes
         elif type(parts)==list and parts:
             self.nodes = parts[0].nodes.union(parts[1].nodes)
         else:
@@ -50,6 +53,17 @@ class Supernode():
     
     def display(self):
         print(self.nodes)
+    
+    def sample(self, sketch):
+        if len(self.nodes) == 1:
+            (node,) = self.nodes
+            sample = sketch.l_0_sample(channel=node)
+        else:
+            terms = tuple((i,1) for i in self.nodes)
+            sample = sketch.l_0_sample_linear(terms)
+            index, value = sample
+            edge = ite(n,index)
+            return edge
     
 
 def edge_sketcher(m, edge, sketch):
@@ -67,9 +81,10 @@ if __name__ == '__main__':
     sketch = sktch.l_0_sketch(m, channels=10)
     edges = [Edge(0,i,insert=True) for i in range(1,10)]
     edges.extend([Edge(0,j,insert=False) for j in range(2,10,2)])
+    edges.append(Edge(1,5,insert=True))
     for e in edges:
-        edge_sketcher(m, e, sketch)
-    terms = ((0,1),(1,1),(5,1),(7,1),(9,1))
-    sample=sketch.l_0_sample_linear(terms)
-    index, value = sample
-    print(ite(m, index))
+        edge_sketcher(n, e, sketch)
+    
+    #terms = ((0,1),(1,1),(7,1),(9,1))
+    s = Supernode(nodes={0,1,7,9})
+    print(s.sample(sketch))
