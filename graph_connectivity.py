@@ -6,7 +6,7 @@ Created on Tue Sep 10 21:13:33 2019
 @author: devd
 """
 
-import l_0sampler_alt as sktch
+import l_0sampler as sktch
 import math
 
 def ite(m, index):
