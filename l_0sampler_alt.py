@@ -171,23 +171,26 @@ class l_0_sketch():
     This procedure is called sketching. After the stream, can sample uniformly 
     at random from the nonzero elements of the vector, returning both index 
     and value of the sampled element.  
-    Additionally supports sketching multiple streams in parallel, using the 
-    same randomness for each stream.  After the streams, the sketch can sample
-    uniformly at random from the nonzero elements of any linear combination of
-    the streams. In this case the entire sketch lakes C*polylog(n) space where C
-    is the number of streams.  Typically, for graph sketching applications
-    C = |V| and n = |V| choose 2, which leads to |V| * polylog(|V|) space
-    Warning: only ever sample _ONCE_ from an l_0 sketch.  Taking more samples 
-    (ESPECIALLY if you try to subtract the first value you sampled, and then 
-    sample again in hopes of getting a second distinct sample) WILL NOT yield
-    the desired statistical properties and may actually output nonsense."""
+    Additionally supports sketching multiple streams (here called "channels")
+    in parallel, using the same randomness for each stream.  After the streams,
+    the sketch can sample uniformly at random from the nonzero elements of any
+    linear combination of these channels. In this case the entire sketch takes 
+    C*polylog(n) space where C is the number of channels.  Typically, for graph
+    sketching applications C = |V| and n = |V| choose 2, which leads to 
+    |V| * polylog(|V|) space.
+    Warning: only ever sample _ONCE_ from a channel of an l_0 sketch (sampling 
+    from a linear combo of channels counts as sampling from each of those 
+    channels).  Taking more samples from a channel (ESPECIALLY if you try to 
+    subtract the first value you sampled, and then sample again in hopes of 
+    getting a second distinct sample) WILL NOT yield the desired statistical 
+    properties and may actually output nonsense."""
     def __init__(self, n, channels=1):
         self.n = n
         self.p = self.choose_p()
         #how many times we need to repeat the random processes for high prob of success.  maybe excessive on outer list comp?
         reps = int(math.log2(n))+1
         self.subsets = [[RandomIndexSubset(i, self.p, channels) for i in range(reps)] for j in range(reps)]
-        self.sampled = False
+        self.sampled = set()
         
     def choose_p(self):
         """p must be prime and also poly(n)."""
@@ -231,9 +234,9 @@ class l_0_sketch():
     def l_0_sample(self, channel=0):
         """Samples a nonzero element uniformly at random from the vector
         defined by the stream on the specified channel."""
-        if self.sampled:
-            raise Exception('You already sampled from this sketch. Sampling again is potentially fatal to you, the user.  Didn\'t you read the docstring?')
-        self.sampled = True
+        if channel in self.sampled:
+            raise Exception('You already sampled from channel {} in this sketch. Sampling again is potentially fatal to you, the user.  Didn\'t you read the docstring?'.format(channel))
+        self.sampled.add(channel)
         for mini_sketch in self.subsets:
             passed = self.check_mini_sketch(mini_sketch, channel)
             if passed:
@@ -262,8 +265,9 @@ class l_0_sketch():
     def l_0_sample_linear(self, terms):
         """Samples a nonzero element uniformly at random from the vector
         defined by the specified linear combination of streams."""
-        if self.sampled:
-            raise Exception('You already sampled from this sketch. Sampling again is potentially fatal to you, the user.  Didn\'t you read the docstring?')
+        for channel, wt in terms:
+            if channel in self.sampled:
+                raise Exception('You already sampled from this sketch. Sampling again is potentially fatal to you, the user.  Didn\'t you read the docstring?')
         self.sampled = True
         for mini_sketch in self.subsets:
             passed = self.check_mini_sketch_linear(mini_sketch, terms)
@@ -289,6 +293,8 @@ if __name__ == '__main__':
     l.process_stream(stream2, channel=1)
     terms = ((0,1), (1,1))
     #print('the sampled index, value pair is {}'.format(l.l_0_sample(channel=0)))
-    print('the sampled index, value pair is {}'.format(l.l_0_sample_linear(terms)))
+    #print('the sampled index, value pair is {}'.format(l.l_0_sample_linear(terms)))
+    print(l.l_0_sample(channel=0))
+    print(l.l_0_sample(channel=1))
     print('it\'s correct if the index is a multiple of 10 but not 20 and the value is 1')
     
