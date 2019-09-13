@@ -35,7 +35,7 @@ class RandomIndexSubset():
     independently w/p 1/2^i.  For each channel C, maintains sum{x_j}, sum{j*x_j},
     and sum{x_j*r^j mod p} for all j in S, x_j in C.  Set maintained in 
     O(polylog(n) + # channels) space via hash functions."""
-    def __init__(self, i, p, channels):
+    def __init__(self, i, p, channels, display):
         seed = getrandbits(32)
         self.fn = xxhash.xxh32(seed = seed)
         #self.total = 0    #i think this line can be removed 
@@ -60,6 +60,7 @@ class RandomIndexSubset():
         #for an arbitrary number of linear combinations of channels. That
         #might need to be fixed.
         self.linear_queryable = {}
+        self.display = display
     
     def hasher(self, num):
         """Input: an integer (index for vector).  Output: a random integer."""
@@ -95,14 +96,14 @@ class RandomIndexSubset():
         try:
             quotient = int(a)/int(b)
         except:
-            print('b is 0 so it failed.')
+            if self.display: print('b is 0 so it failed.')
             return False
         self.c_check = (b*pow(self.r, int(quotient), self.p))
         if quotient == int(quotient) and self.c_check == c:
             self.queryable[channel] = True
-            print('passed!')
+            if self.display: print('passed!')
             return True
-        print('failed the checks')
+        if self.display: print('failed the checks')
         return False
 
     def sample(self, channel):
@@ -114,7 +115,7 @@ class RandomIndexSubset():
             c = self.c[channel]
             index = int(a/b)
             value = b
-            print('a = {} b = {} c = {} a/b = {} r = {} c_check = {}, p = {}'.format(a, b, c, a/b, self.r, self.c_check, self.p))
+            if self.display: print('a = {} b = {} c = {} a/b = {} r = {} c_check = {}, p = {}'.format(a, b, c, a/b, self.r, self.c_check, self.p))
             return index, value
         else:
             raise Exception('you tried to sample from subset {}, channel {} when it hadn\'t been checked successfully'.format(self.i, channel))
@@ -136,14 +137,14 @@ class RandomIndexSubset():
         try:
             quotient = int(a)/int(b)
         except:
-            print('b is 0 so it failed.')
+            if self.display: print('b is 0 so it failed.')
             return False
         self.c_check = (b*pow(self.r, int(quotient), self.p))
         if quotient == int(quotient) and self.c_check == c:
             self.linear_queryable[terms] = True
-            print('passed!')
+            if self.display: print('passed!')
             return True    
-        print('failed the checks')
+        if self.display: print('failed the checks')
         return False
     
     def sample_linear_combo(self, terms):
@@ -160,7 +161,7 @@ class RandomIndexSubset():
                 c += wt * self.c[channel]
             index = int(a/b)
             value = b
-            print('a = {} b = {} c = {} a/b = {} r = {} c_check = {}, p = {}'.format(a, b, c, a/b, self.r, self.c_check, self.p))
+            if self.display: print('a = {} b = {} c = {} a/b = {} r = {} c_check = {}, p = {}'.format(a, b, c, a/b, self.r, self.c_check, self.p))
             return index, value
         else:
             raise Exception('you tried to sample from linear combo of channels {} of subset i {} when it hadn\'t been checked successfully'.format(self.terms))
@@ -184,14 +185,14 @@ class l_0_sketch():
     subtract the first value you sampled, and then sample again in hopes of 
     getting a second distinct sample) WILL NOT yield the desired statistical 
     properties and may actually output nonsense."""
-    def __init__(self, n, channels=1):
+    def __init__(self, n, channels=1, display=False):
         if type(n) is not int:
             raise Exception('n must be an int, you provided a {}'.format(type(n)))
         self.n = n
         self.p = self.choose_p()
         #how many times we need to repeat the random processes for high prob of success.  maybe excessive on outer list comp?
         reps = int(math.log2(n))+1
-        self.subsets = [[RandomIndexSubset(i, self.p, channels) for i in range(reps)] for j in range(reps)]
+        self.subsets = [[RandomIndexSubset(i, self.p, channels, display) for i in range(reps)] for j in range(reps)]
         self.sampled = set()
         
     def choose_p(self):

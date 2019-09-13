@@ -15,13 +15,14 @@ def ite(n, index):
     m = n*(n-1)/2
     i = n-int(0.5*(1 + math.sqrt(8*(m-index-1)+1)))-1
     j = index + i - int(m-(n-i)*(n-i-1)/2)+1
+    print(i,j)
     return i,j
     
 class Edge():
     """Wrapper clas for edges, with eti(edge to index) method that calculates
     which indices in the sketch need to be updated when the edge appears in 
     stream."""
-    def __init__(self, i, j, insert):
+    def __init__(self, i, j, insert=True):
         if i==j:
             raise Exception('i and j have to be different')
         self.i, self.j = sorted((i,j))
@@ -60,11 +61,47 @@ class Supernode():
             sample = sketch.l_0_sample(channel=node)
         else:
             terms = tuple((i,1) for i in self.nodes)
+            print('querying {}'.format(terms))
             sample = sketch.l_0_sample_linear(terms)
-            index, value = sample
-            edge = ite(n,index)
-            return edge
+        if sample==False:
+            return False
+        index, value = sample
+        edge = ite(n,index)
+        return edge
+
+
+class Supernode_Set():
+    """maintains invariant: each node is contained by exactly 1 supernode."""
+    def __init__(self, n):
+        self.n = n
+        self.supernodes = {i:Supernode(i) for i in range(n)}
     
+    def boruvka_round(self, sketch):
+        """Returns False if either no edges between connected components were 
+        discovered, or if all nodes are part of the same connected component.  
+        True otherwise."""
+        edges = []
+        #sample an edge incident to each connected component
+        for node, cc in self.supernodes.items():
+            result = cc.sample(sketch)
+            if result != False:
+                i,j = result
+                e = Edge(i,j)
+                edges.append(e)
+        #merge connected components based on discovered edges
+        for e in edges:
+            i,j = e.i, e.j
+            a = self.supernodes[i]
+            b = self.supernodes[j]
+            c = Supernode(parts=[a,b])
+            #overwrite previous supernodes a and b
+            #BUG HERE SOMEHOW
+            for node in c.nodes:
+                self.supernodes[i] = c
+                
+    def display(self):
+        for n, cc in self.supernodes.items():
+            print(cc.nodes)
 
 def edge_sketcher(m, edge, sketch):
     """Translates an edge update into the signed vertex/edge vector form and
@@ -72,19 +109,30 @@ def edge_sketcher(m, edge, sketch):
     index = edge.eti(m)
     sketch.update(index, edge.p, channel=edge.i)
     sketch.update(index, -1*edge.p, channel=edge.j)
+    
+
 
 
 
 if __name__ == '__main__':
     n = 10
     m = int(n*(n-1)/2)
-    sketch = sktch.l_0_sketch(m, channels=10)
+    rounds = int(math.log2(n))+1
+    sketches = [sktch.l_0_sketch(m, channels=10) for r in range(rounds)]
+    print(sketches)
+    
     edges = [Edge(0,i,insert=True) for i in range(1,10)]
     edges.extend([Edge(0,j,insert=False) for j in range(2,10,2)])
     edges.append(Edge(1,5,insert=True))
-    for e in edges:
-        edge_sketcher(n, e, sketch)
     
-    #terms = ((0,1),(1,1),(7,1),(9,1))
-    s = Supernode(nodes={0,1,7,9})
-    print(s.sample(sketch))
+    for e in edges:
+        for sketch in sketches:
+            edge_sketcher(n, e, sketch)
+    
+    
+    s = Supernode_Set(n)
+    s.display()
+    s.boruvka_round(sketches[0])
+    s.display()
+    s.boruvka_round(sketches[1])
+    s.display()
