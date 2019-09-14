@@ -85,7 +85,7 @@ class Supernode_Set():
         #sample an edge incident to each connected component
         #need to loop over only unique ccs
         for cc in set(cc for cc in self.supernodes.values()):
-            print('looking for an edge out of {}'.format(cc.nodes))
+            #print('looking for an edge out of {}'.format(cc.nodes))
             result = cc.sample(sketch)
             if result != False:
                 change = True
@@ -112,6 +112,10 @@ class Supernode_Set():
         print('displaying supernode set')
         for n, cc in self.supernodes.items():
             print(n, cc.nodes)
+            
+    def get_ccs(self):
+        ccs = set(self.supernodes.values())
+        return [cc.nodes for cc in ccs]
 
 def edge_sketcher(m, edge, sketch):
     """Translates an edge update into the signed vertex/edge vector form and
@@ -120,38 +124,31 @@ def edge_sketcher(m, edge, sketch):
     sketch.update(index, edge.p, channel=edge.i)
     sketch.update(index, -1*edge.p, channel=edge.j)
     
-
-
+def graph_connectivity(n, edge_stream):
+    m = int(n*(n-1)/2)
+    rounds = int(math.log2(n))+1
+    sketches = [sktch.l_0_sketch(m, channels=10) for r in range(rounds)]
+    for e in edge_stream:
+        for sketch in sketches:
+            edge_sketcher(n, e, sketch)
+    s = Supernode_Set(n)
+    #s.display()
+    done = False
+    b_round = 0
+    while not done:
+        done = s.boruvka_round(sketches[b_round])
+        #print('Are we done yet? {}'.format(done))
+        b_round += 1
+        #s.display()
+    return s.get_ccs()
 
 
 if __name__ == '__main__':
     n = 10
-    m = int(n*(n-1)/2)
-    rounds = int(math.log2(n))+1
-    sketches = [sktch.l_0_sketch(m, channels=10) for r in range(rounds)]
     
     edges = [Edge(0,i,insert=True) for i in range(1,10)]
     edges.extend([Edge(0,j,insert=False) for j in range(2,10,2)])
-    edges.extend([Edge(3,k,insert=True) for k in range(4,10,2)])
+    #edges.extend([Edge(3,k,insert=True) for k in range(4,10,2)])
     
-    for e in edges:
-        for sketch in sketches:
-            edge_sketcher(n, e, sketch)
+    print(graph_connectivity(n, edges))
     
-    
-    s = Supernode_Set(n)
-    s.display()
-    done = False
-    b_round = 0
-# =============================================================================
-#     s.display()
-#     s.boruvka_round(sketches[0])
-#     s.display()
-#     s.boruvka_round(sketches[1])
-#     s.display()
-# =============================================================================
-    while not done:
-        done = s.boruvka_round(sketches[b_round])
-        print('Are we done yet? {}'.format(done))
-        b_round += 1
-        s.display()
