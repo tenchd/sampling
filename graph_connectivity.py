@@ -14,8 +14,8 @@ from sample_streams import Edge, EdgeStream
     
 
 class Supernode():
-    """A collection of nodes.  Formed by specifying a particular node or
-    merging two (super)nodes."""
+    """A collection of nodes.  Formed by specifying a particular node, or set 
+    of nodes, or merging two (super)nodes."""
     def __init__(self, node = None, nodes = None, parts = None):
         if type(node)==int:
             self.nodes = {node}
@@ -27,15 +27,16 @@ class Supernode():
             raise Exception("Tried to make a supernode without any nodes to combine")
     
     def display(self):
+        """Print out current set of nodes in the supernode."""
         print(self.nodes)
     
     def sample(self, sketch):
+        """Samples an outgoing edge from the supernode from the given sketch."""
         if len(self.nodes) == 1:
             (node,) = self.nodes
             sample = sketch.l_0_sample(channel=node)
         else:
             terms = tuple((i,1) for i in self.nodes)
-            #print('querying {}'.format(terms))
             sample = sketch.l_0_sample_linear(terms)
         if sample==False:
             return False
@@ -119,7 +120,7 @@ def graph_connectivity(n, edge_stream):
 
 
 if __name__ == '__main__':
-    n = 10000
+    n = 100
     
     edges = EdgeStream(n)
     #edges = [Edge(endpoints = (0,i), insert=True) for i in range(1,10)]
