@@ -8,6 +8,8 @@ Created on Sat Sep 14 21:36:49 2019
 
 import random
 import sample_streams as strm
+from sketch_abstract import Sketch
+from random import getrandbits
 
 def is_prime(n):
     """"pre-condition: n is a nonnegative integer
@@ -33,19 +35,32 @@ def choose_p(n):
                 break
         return target
 
-def fingerprint(n, stream, seed=0):
+class Fingerprint_Sketch(Sketch):
     """Maps a n-length vector to a random output such that the probability of
-    two different vectors mapping to the same output """
-    p = choose_p(n)
-    random.seed(seed)
-    r = random.randint(1, p-1)
-    fingerprint = 0
-    for index, value in stream:
-        fingerprint += value * pow(r, index, p)
-    return fingerprint
+    two different vectors mapping to the same output is n/p"""
+    def __init__(self, n, seed=None):
+        if seed==None:
+            seed=getrandbits(32)
+        self.p = choose_p(n)
+        random.seed(seed)
+        self.r = random.randint(1,self.p-1)
+        self.sketch = 0
+    
+    def update(self, element):
+        index, value = element
+        self.sketch += value * pow(self.r, index, self.p)
+        
+    def process_stream(self, stream):
+        super(Fingerprint_Sketch, self).process_stream(stream)
+    
+    def query(self):
+        return self.sketch
 
 
 if __name__=='__main__':
     n = 100
-    print(fingerprint(n, strm.SampleStream(n), seed = 3))
-    print(fingerprint(n, strm.SampleStream2(n), seed = 3))
+    f1 = Fingerprint_Sketch(n)
+    f1.process_stream(strm.SampleStream(n))
+    f2 = Fingerprint_Sketch(n)
+    f2.process_stream(strm.SampleStream2(n))
+    print(f1.query(), f2.query())
