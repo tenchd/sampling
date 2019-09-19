@@ -14,6 +14,7 @@ import math
 import struct
 import sample_streams as strm
 import itertools
+from sketch_abstract import Sketch
 
 def is_prime(n):
     """"pre-condition: n is a nonnegative integer
@@ -167,7 +168,7 @@ class RandomIndexSubset():
             raise Exception('you tried to sample from linear combo of channels {} of subset i {} when it hadn\'t been checked successfully'.format(self.terms))
     
 
-class l_0_sketch():
+class l_0_sketch(Sketch):
     """Processes a stream of updates to a length n vector in polylog(n) space.  
     This procedure is called sketching. After the stream, can sample uniformly 
     at random from the nonzero elements of the vector, returning both index 
@@ -282,7 +283,11 @@ class l_0_sketch():
                 return index, value
         return False
             
-        
+    def query(self, linear=False, channel=0, terms = None):
+        if linear:
+            return self.l_0_sample_linear(terms)
+        else:
+            return self.l_0_sample(channel)
         
     
     
@@ -299,7 +304,7 @@ if __name__ == '__main__':
     terms = ((0,1), (1,1))
     #print('the sampled index, value pair is {}'.format(l.l_0_sample(channel=0)))
     #print('the sampled index, value pair is {}'.format(l.l_0_sample_linear(terms)))
-    print(l.l_0_sample(channel=0))
-    print(l.l_0_sample(channel=1))
+    print(l.query(channel=0))
+    print(l.query(channel=1))
     print('it\'s correct if the index is a multiple of 10 but not 20 and the value is 1')
     

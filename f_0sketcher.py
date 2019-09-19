@@ -120,6 +120,11 @@ class F_0_sketcher():
         frac = (2+term2)/(term2*eps*term3)
         result = term1*frac
         return result
+    
+    def update(self, index, value):
+            for t in self.Ts:
+                t.update(index, value)
+        
         
     def process_stream(self, stream):
         """Iterates through the stream iterator, applying each stream element
@@ -128,7 +133,7 @@ class F_0_sketcher():
             for t in self.Ts:
                 t.update(index, value)
     
-    def estimate_F_0(self):
+    def query(self):
         """Call this after the stream has been processed to get an estimate
         for F_0.  First checks whether the results from different T checkers
         are consistent.  If not, the F_0 estimation process fails.  Otherwise,
@@ -157,5 +162,5 @@ if __name__ == '__main__':
     #stream = iter(SampleStream(n))
     f = F_0_sketcher(n, eps, delta, real_k = False)
     f.process_stream(stream)
-    print(f.estimate_F_0())
+    print(f.query())
     

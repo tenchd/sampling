@@ -34,10 +34,10 @@ class Supernode():
         """Samples an outgoing edge from the supernode from the given sketch."""
         if len(self.nodes) == 1:
             (node,) = self.nodes
-            sample = sketch.l_0_sample(channel=node)
+            sample = sketch.query(channel=node)
         else:
             terms = tuple((i,1) for i in self.nodes)
-            sample = sketch.l_0_sample_linear(terms)
+            sample = sketch.query(linear=True,terms=terms)
         if sample==False:
             return False
         index, value = sample
