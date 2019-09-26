@@ -36,8 +36,11 @@ def choose_p(n):
         return target
 
 class Fingerprint_Sketch(Sketch):
-    """Maps a n-length vector to a random output such that the probability of
-    two different vectors mapping to the same output is n/p"""
+    """Maps a length n vector to an integer.  The integer value of the sketch 
+    is a fingerprint of the input defined by the stream.  The same input 
+    defined by two different streams will sketch to the same fingerprint value.
+    For any two different inputs, the probability that they will be sketched 
+    to the same fingerprint value is polynomially low."""
     def __init__(self, n, seed=None):
         if seed==None:
             seed=getrandbits(32)
@@ -47,13 +50,16 @@ class Fingerprint_Sketch(Sketch):
         self.sketch = 0
     
     def update(self, element):
+        """Sketches each element in the stream """
         index, value = element
         self.sketch += value * pow(self.r, index, self.p)
         
     def process_stream(self, stream):
+        """See super()"""
         super(Fingerprint_Sketch, self).process_stream(stream)
     
     def query(self):
+        """Returns the fingerprint of the input stream."""
         return self.sketch
 
 

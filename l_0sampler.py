@@ -284,6 +284,8 @@ class l_0_sketch(Sketch):
         return False
             
     def query(self, linear=False, channel=0, terms = None):
+        """Answers a query either for a single channel or a linear combination
+        of channels."""
         if linear:
             return self.l_0_sample_linear(terms)
         else:

@@ -122,6 +122,7 @@ class F_0_sketcher():
         return result
     
     def update(self, index, value):
+        """Updates the sketch for a given index, value pair."""
             for t in self.Ts:
                 t.update(index, value)
         
