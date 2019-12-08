@@ -296,6 +296,7 @@ class l_0_sketch(Sketch):
     
 
 if __name__ == '__main__':
+    #instantiate an l_0 sketch of an initially empty vector with 12800 entries
     n = 12800
     l = l_0_sketch(n, channels=2)
     #stream = itertools.chain(iter(strm.SampleStream(n)),iter(strm.SampleStream2(n)))
@@ -303,10 +304,10 @@ if __name__ == '__main__':
     stream2 = iter(strm.SampleStream2(n))
     l.process_stream(stream1, channel=0)
     l.process_stream(stream2, channel=1)
-    terms = ((0,1), (1,1))
     #print('the sampled index, value pair is {}'.format(l.l_0_sample(channel=0)))
     #print('the sampled index, value pair is {}'.format(l.l_0_sample_linear(terms)))
+    #sample from each channel of the sketch
     print(l.query(channel=0))
     print(l.query(channel=1))
-    print('it\'s correct if the index is a multiple of 10 but not 20 and the value is 1')
+    #print('it\'s correct if the index is a multiple of 10 but not 20 and the value is 1')
     
